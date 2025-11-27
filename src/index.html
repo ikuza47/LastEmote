@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Last 7TV Emote</title>
+  <style>
+    * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #000;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#emote-container {
+  position: absolute;
+  display: none;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+#emote {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+#combo {
+  position: absolute;
+  font-weight: bold;
+  color: white;
+  text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+  display: none;
+  animation: comboPulse 0.6s ease-out;
+}
+
+@keyframes comboPulse {
+  0% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(1.4) rotate(10deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+  </style>
+</head>
+<body>
+  <div id="emote-container">
+    <img id="emote" alt="Last 7TV Emote" />
+    <div id="combo"></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

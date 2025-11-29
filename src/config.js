@@ -5,12 +5,14 @@ window.LastEmoteConfig = {
 
   // Combo settings
   showCombo: true,                        // Show combo counter | false = hide
-  comboFontSize: 120,                     // Combo text size in pixels
+  comboFontSize: 240,                     // Combo text size in pixels
   fadeTimeout: 30000,                     // Time (ms) before emote fades | 0 = never fade
+  minComboToShow: 5,                      // Minimum combo count to show emote | 0 = always show !! W.I.P
+  comboText: 'x${comboCount}',            // Combo text format | default: 'x${comboCount}'
 
   // Appearance
   borderRadius: 12,                       // Image corner radius in pixels
-  fontFamily: 'Arial, sans-serif',        // Font family for combo text
+  fontFamily: 'Inter, sans-serif',        // Font family for combo text
   fontColor: '#ffffff',                   // Combo text color (hex, rgb, or named color)
 
   // Positioning

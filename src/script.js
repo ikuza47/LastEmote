@@ -107,7 +107,7 @@
         log(`✅ Загружено ${globalEmotes.size} глобальных эмодзи`);
       }
 
-      // Канальные
+      // Канальных
       const channelRes = await fetch(`https://7tv.io/v3/users/twitch/${twitchUserId}`);
       if (channelRes.ok) {
         const data = await channelRes.json();
@@ -133,6 +133,9 @@
         if (emoteContainer.style.display !== 'none') {
           emoteContainer.style.display = 'none';
         }
+        // Reset combo counter when the emote fades out
+        comboCount = 0;
+        comboEl.style.display = 'none';
       }, 800);
     }, cfg.fadeTimeout);
   }
@@ -145,26 +148,46 @@
     }
 
     if (name === lastEmoteName) {
+      // Increment combo for repeated emote
       comboCount++;
+
+      // Check if combo count meets the minimum requirement to show the emote
+      if (cfg.minComboToShow > 0 && comboCount < cfg.minComboToShow) {
+        // Don't show the emote if combo count is less than the minimum
+        resetFadeTimer(); // Still reset the timer so the display stays active
+        return;
+      }
+
+      // Update combo text with custom format
+      const formattedComboText = cfg.comboText.replace('${comboCount}', comboCount.toString());
+
       if (cfg.showCombo && comboCount > 1) {
-        comboEl.textContent = `x${comboCount}`;
+        comboEl.textContent = formattedComboText;
         comboEl.style.display = "block";
         comboEl.style.animation = 'none';
         setTimeout(() => comboEl.style.animation = 'comboPulse 0.6s ease-out', 10);
       }
+
+      // Make sure the emote is visible again if it was hidden
+      emoteContainer.style.display = "flex";
+      emoteContainer.style.opacity = "1";
       resetFadeTimer();
       return;
     }
 
+    // New emote - reset counter and show the emote
     lastEmoteName = name;
     comboCount = 1;
 
     emoteImg.onload = () => {
+      // New emotes are always shown regardless of minComboToShow setting
+      // since the setting only applies to repeated usage of the same emote
       emoteContainer.style.display = "flex";
       emoteContainer.style.opacity = "1";
 
       if (cfg.showCombo && comboCount > 1) {
-        comboEl.textContent = `x${comboCount}`;
+        const formattedComboText = cfg.comboText.replace('${comboCount}', comboCount.toString());
+        comboEl.textContent = formattedComboText;
         comboEl.style.display = "block";
       } else {
         comboEl.style.display = "none";

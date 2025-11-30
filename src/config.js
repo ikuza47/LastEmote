@@ -29,7 +29,13 @@ window.LastEmoteConfig = {
   fireAnimation: true,                    // Enable fire animation
   comboDecayAnimation: true,              // Enable combo decay animation (if false, combo immediately goes to 0 when timer expires),
 
+  // Emote platform settings
+  enable7tv: true,                        // Enable 7TV emotes
+  enableTwitch: true,                     // Enable Twitch native emotes
+  enableBTTV: false,                      // Enable BTTV emotes
+  enableFFZ: false,                       // Enable FFZ emotes
+
   // Debug settings
-  debug: false,                           // Enable debug logging
+  debug: true,                           // Enable debug logging
   debugurl: false                         // Enable debug URL - automatically populate all parameters in URL
 };

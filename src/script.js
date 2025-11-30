@@ -104,6 +104,8 @@
 
   let chatEmotes = new Map();
   let globalEmotes = new Map();
+  let twitchGlobalEmotes = new Map();
+  let twitchSubscriberEmotes = new Map();
   let lastEmoteName = null;
   let comboCount = 0;
   let fadeTimer = null;
@@ -227,6 +229,7 @@
   // === Построение URL эмодзи ===
   function buildEmoteUrl(emoteData) {
     if (!emoteData?.host?.files?.length) return null;
+    // Prefer webp files for better quality, but also check for animated formats
     const webpFiles = emoteData.host.files.filter(f => f.format === 'WEBP');
     if (webpFiles.length === 0) return null;
     webpFiles.sort((a, b) => a.width - b.width);
@@ -239,6 +242,11 @@
 
   // === Загрузка эмодзи ===
   async function load7TVEmotes(twitchUserId) {
+    if (!cfg.enable7tv) {
+      log("❌ 7TV эмодзи отключены в конфигурации");
+      return;
+    }
+
     try {
       // Глобальные
       const globalRes = await fetch('https://7tv.io/v3/emote-sets/global');
@@ -264,6 +272,121 @@
       }
     } catch (e) {
       error("Ошибка при загрузке 7TV эмодзи:", e.message);
+    }
+  }
+
+  // === Загрузка Twitch эмодзи ===
+  async function loadTwitchEmotes(twitchUserId, channelName) {
+    try {
+      // Загрузка глобальных Twitch эмодзи
+      await loadTwitchGlobalEmotes();
+
+      // Загрузка BTTV эмодзи - если включены
+      if (cfg.enableBTTV) {
+        await loadBTTVEmotes(channelName);
+      }
+
+      // Загрузка FFZ эмодзи - если включены
+      if (cfg.enableFFZ) {
+        await loadFFZEmotes(channelName);
+      }
+    } catch (e) {
+      error("Ошибка при загрузке Twitch эмодзи:", e.message);
+    }
+  }
+
+  // === Загрузка глобальных Twitch эмодзи ===
+  async function loadTwitchGlobalEmotes() {
+    try {
+      // Загружаем BTTV глобальные эмодзи - если включены
+      if (cfg.enableBTTV) {
+        const globalRes = await fetch('https://api.betterttv.net/3/cached/emotes/global');
+        if (globalRes.ok) {
+          const data = await globalRes.json();
+          for (const emote of data || []) {
+            const url = `https://cdn.betterttv.net/emote/${emote.id}/3x`;
+            // Используем отдельную коллекцию для BTTV глобальных эмодзи
+            if (!twitchGlobalEmotes.has(emote.code)) {
+              twitchGlobalEmotes.set(emote.code, url);
+            }
+          }
+          log(`✅ Загружено ${data?.length || 0} BTTV глобальных эмодзи`);
+        }
+      }
+
+      // Загружаем FFZ глобальные эмодзи - если включены
+      if (cfg.enableFFZ) {
+        const ffzGlobalRes = await fetch('https://api.frankerfacez.com/v1/set/global');
+        if (ffzGlobalRes.ok) {
+          const data = await ffzGlobalRes.json();
+          for (const [setId, set] of Object.entries(data.sets || {})) {
+            for (const emote of set.emoticons || []) {
+              const url = emote.urls['4'] || emote.urls['2'] || emote.urls['1'];
+              if (url) {
+                const fullUrl = url.startsWith('http') ? url : `https:${url}`;
+                if (!twitchGlobalEmotes.has(emote.name)) {
+                  twitchGlobalEmotes.set(emote.name, fullUrl);
+                }
+              }
+            }
+          }
+          log(`✅ Загружено FFZ глобальных эмодзи`);
+        }
+      }
+    } catch (e) {
+      error("Ошибка при загрузке глобальных эмодзи:", e.message);
+    }
+  }
+
+  // === Загрузка BTTV эмодзи ===
+  async function loadBTTVEmotes(channelName) {
+    try {
+      // Получаем ID пользователя Twitch
+      const userId = await getTwitchUserId(channelName);
+      if (!userId) {
+        error("Не удалось получить ID пользователя Twitch для канала:", channelName);
+        return;
+      }
+
+      // Загружаем эмодзи для канала
+      const channelRes = await fetch(`https://api.betterttv.net/3/cached/users/twitch/${userId}`);
+      if (channelRes.ok) {
+        const data = await channelRes.json();
+        const emotes = [...(data.channelEmotes || []), ...(data.sharedEmotes || [])];
+        for (const emote of emotes) {
+          // Use the proper BTTV URL format that supports animation
+          const url = `https://cdn.betterttv.net/emote/${emote.id}/3x`;
+          // Also store the original emote data to check for animated property if available
+          twitchSubscriberEmotes.set(emote.code, url);
+        }
+        log(`✅ Загружено ${emotes.length} BTTV эмодзи канала ${channelName}`);
+      }
+    } catch (e) {
+      error("Ошибка при загрузке BTTV эмодзи:", e.message);
+    }
+  }
+
+  // === Загрузка FFZ эмодзи ===
+  async function loadFFZEmotes(channelName) {
+    try {
+      // Загрузка FFZ эмодзи для канала
+      const channelRes = await fetch(`https://api.frankerfacez.com/v1/room/${channelName}`);
+      if (channelRes.ok) {
+        const data = await channelRes.json();
+        const sets = data.sets || {};
+        for (const [setId, set] of Object.entries(sets)) {
+          for (const emote of set.emoticons || []) {
+            const url = emote.urls['4'] || emote.urls['2'] || emote.urls['1'];
+            if (url) {
+              const fullUrl = url.startsWith('http') ? url : `https:${url}`;
+              twitchSubscriberEmotes.set(emote.name, fullUrl);
+            }
+          }
+        }
+        log(`✅ Загружено FFZ эмодзи канала ${channelName}`);
+      }
+    } catch (e) {
+      error("Ошибка при загрузке FFZ эмодзи:", e.message);
     }
   }
 
@@ -602,7 +725,12 @@
       error("Не удалось загрузить эмодзи:", url);
       emoteContainer.style.display = "none";
     };
-    emoteImg.src = url;
+
+    // Force image reload to ensure animated emotes restart their animation
+    // Add cache busting for animated emotes by adding a timestamp
+    const timestamp = Date.now();
+    const cacheBustedUrl = url + (url.includes('?') ? '&' : '?') + '_=' + timestamp;
+    emoteImg.src = cacheBustedUrl;
   }
 
   // === Подключение к Twitch IRC ===
@@ -626,24 +754,107 @@
       const match = raw.match(/@([^;]+).+PRIVMSG #[^ ]+ :(.+)/);
       if (!match) return;
 
-      const tags = raw.split(' ')[0];
-      const displayNameMatch = tags.match(/display-name=([^;]*)/);
+      const ircTags = raw.split(' ')[0];
+      const displayNameMatch = ircTags.match(/display-name=([^;]*)/);
+      const rawTags = raw.split(' ')[0]; // Get the tags part from the raw message
+      const tags = {};
+      rawTags.substring(1).split(';').forEach(tag => {
+        const [key, value] = tag.split('=');
+        tags[key] = value || true;
+      });
+
       const username = displayNameMatch?.[1] || 'unknown';
       const message = match[2];
       log(`💬 [${username}]: ${message}`);
 
-      const words = message.split(/\s+/);
-      for (const word of words) {
-        const clean = word.replace(/[.,;:!?)]+$/, "");
-        log(`🔍 Проверка: "${clean}"`);
+      // Handle Twitch emotes from tags - they come in format like: emote_id:start-end,start2-end2
+      let hasTwitchEmote = false;
+      if (cfg.enableTwitch && tags['emotes']) {
+        if (typeof(tags['emotes']) === 'string') {
+          const emoteDataArray = tags['emotes'].split('/');
+          for (const emoteData of emoteDataArray) {
+            if (!emoteData) continue; // Skip empty strings
+            const [emoteId, positions] = emoteData.split(':');
+            if (!emoteId || !positions) continue;
 
-        if (chatEmotes.has(clean)) {
-          showEmote(clean, chatEmotes.get(clean));
-          return;
+            const positionPairs = positions.split(',');
+            for (const pos of positionPairs) {
+              const [start, end] = pos.split('-');
+              if (start !== undefined && end !== undefined) {
+                const startIdx = parseInt(start);
+                const endIdx = parseInt(end);
+                if (!isNaN(startIdx) && !isNaN(endIdx) && startIdx <= message.length && endIdx < message.length) {
+                  // Get the emote code from the message at these positions
+                  let emoteCode = message.substring(startIdx, endIdx + 1);
+
+                  // Handle special case where there might be non-text characters
+                  const emojis = new RegExp('[\u1000-\uFFFF]+', 'g');
+                  let aux = message.replace(emojis, ' ');
+                  emoteCode = aux.substring(startIdx, endIdx + 1).trim();
+
+                  if (emoteCode) {
+                    // Determine the correct URL format based on emote ID format
+                    let emoteUrl;
+                    // Check if emoteId is numeric (legacy Twitch) or UUID (newer format)
+                    if (/^\d+$/.test(emoteId)) {
+                      // Numeric ID format - old style
+                      emoteUrl = `https://static-cdn.jtvnw.net/emoticons/v1/${emoteId}/3.0`;
+                    } else {
+                      // UUID format - newer Twitch format (emotesv2_...)
+                      emoteUrl = `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/3.0`;
+                    }
+
+                    log(`🖼️ Найден Twitch эмодзи: ${emoteCode} (ID: ${emoteId})`);
+                    showEmote(emoteCode, emoteUrl);
+                    hasTwitchEmote = true;
+                    break; // Exit inner loops after showing first emote
+                  }
+                }
+                if (hasTwitchEmote) break;
+              }
+              if (hasTwitchEmote) break;
+            }
+            if (hasTwitchEmote) break;
+          }
         }
-        if (globalEmotes.has(clean)) {
-          showEmote(clean, globalEmotes.get(clean));
-          return;
+      }
+
+      // If no Twitch emote was found in tags, fall back to other emote sources
+      if (!hasTwitchEmote) {
+        const words = message.split(/\s+/);
+        for (const word of words) {
+          const clean = word.replace(/[.,;:!?)]+$/, "");
+          log(`🔍 Проверка: "${clean}"`);
+
+          // Проверяем 7TV эмодзи (канальные) - если включены
+          if (cfg.enable7tv && chatEmotes.has(clean)) {
+            showEmote(clean, chatEmotes.get(clean));
+            return;
+          }
+          // Проверяем 7TV эмодзи (глобальные) - если включены
+          if (cfg.enable7tv && globalEmotes.has(clean)) {
+            showEmote(clean, globalEmotes.get(clean));
+            return;
+          }
+          // Проверяем BTTV/FFZ глобальные эмодзи - если включены
+          if (cfg.enableBTTV && twitchGlobalEmotes.has(clean)) {
+            showEmote(clean, twitchGlobalEmotes.get(clean));
+            return;
+          }
+          // Проверяем BTTV/FFZ канал эмодзи - если включены
+          if (cfg.enableBTTV && twitchSubscriberEmotes.has(clean)) {
+            showEmote(clean, twitchSubscriberEmotes.get(clean));
+            return;
+          }
+          // Also check FFZ emotes if enabled
+          if (cfg.enableFFZ && twitchGlobalEmotes.has(clean)) {
+            showEmote(clean, twitchGlobalEmotes.get(clean));
+            return;
+          }
+          if (cfg.enableFFZ && twitchSubscriberEmotes.has(clean)) {
+            showEmote(clean, twitchSubscriberEmotes.get(clean));
+            return;
+          }
         }
       }
     };
@@ -666,6 +877,7 @@
     }
 
     await load7TVEmotes(userId);
+    await loadTwitchEmotes(userId, cfg.nickname);
     connectToTwitchChat(cfg.nickname);
   })();
 })();

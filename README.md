@@ -1,79 +1,87 @@
 # LastEmote
 
-A Twitch overlay that displays the last 7TV emote used in chat with combo counter and visual effects.
+A Twitch emote tracker that displays the last used emote from chat with combo counter and animations.
 
 ## Features
 
-- **7TV Emote Tracking**: Automatically detects and displays 7TV emotes from Twitch chat
-- **Combo Counter**: Shows consecutive use count of the same emote
-- **Visual Effects**: Includes fire effects when combo reaches a threshold
-- **Customizable Configuration**: Supports various appearance and behavior settings
-- **Debug Mode**: Optional logging for troubleshooting
+- **7TV Emotes Support**: Displays both global and channel-specific 7TV emotes
+- **Twitch Native Emotes**: Supports Twitch native emotes from IRC tags
+- **BTTV & FFZ Support**: Additional support for BetterTTV and FrankerFaceZ emotes (configurable)
+- **Combo Counter**: Tracks consecutive emote usage with visual counter
+- **Fire Effect**: Special fire animation when combo reaches threshold
+- **Configurable Settings**: Customizable appearance, positioning, and animation options
+- **Emote Platform Selection**: Toggle individual emote platforms (7TV, Twitch, BTTV, FFZ)
 - **Local Config via URL**: All parameters can be overridden through URL parameters
+
 
 ## Installation
 
-1. Clone or download this repository
-2. Open `index.html` in your browser or OBS browser sourse
+1. Download the latest release from the releases page
+2. Extract the files to your desired location
+3. Open `index.html` in your browser or load as a browser source in OBS
 
 ## Configuration
 
-### Config File
+Edit `config.js` to customize the application:
 
-Default configuration is stored in `config.js`. All parameters include comments explaining their function.
+```javascript
+window.LastEmoteConfig = {
+  // General settings
+  nickname: 'your_channel_name',           // Twitch channel name to monitor
+  fadeTimeout: 10000,                      // Time (ms) before emote fades | 0 = never fade
 
-### URL Parameters
+  // Emote platform settings
+  enable7tv: true,                         // Enable 7TV emotes (default: true)
+  enableTwitch: true,                      // Enable Twitch native emotes (default: true)
+  enableBTTV: false,                       // Enable BTTV emotes (default: false)
+  enableFFZ: false,                        // Enable FFZ emotes (default: false)
 
-All configuration parameters can be overridden using URL parameters. For example:
-```
-index.html?nickname=hellcake47&fadeTimeout=10000&showCombo=false
-```
+  // Appearance settings
+  borderRadius: 12,                        // Image corner radius in pixels
+  fontFamily: 'Inter',                     // Font family for combo text
+  fontColor: '#ffffffff',                  // Combo text color (hex, rgb, or named color)
 
-### Configuration Parameters
+  // Combo settings
+  showCombo: true,                         // Show combo counter | false = hide
+  comboFontSize: 240,                      // Combo text size in pixels
+  comboSave: true,                         // Whether sending same emote during decay saves combo
 
-#### General Settings
-- `nickname`: Twitch channel name to monitor (default: 'ikuza47')
-- `fadeTimeout`: Time (ms) before emote fades, 0 = never fade (default: 5000)
+  // Positioning
+  anchorX: 0,                              // Horizontal anchor | 0 = left | 1 = center | 2 = right
+  anchorY: 0,                              // Vertical anchor | 0 = bottom | 1 = center | 2 = top
 
-#### Appearance Settings
-- `borderRadius`: Image corner radius in pixels (default: 12)
-- `fontFamily`: Font family for combo text (default: 'Inter, sans-serif')
-- `fontColor`: Combo text color (default: '#ffffffff')
+  // Fire effect settings
+  fireShow: true,                          // Enable fire effect
+  fireComboCount: 5,                       // Combo threshold to show fire effect
+  fireEmoji: '🔥',                          // Emoji to show as fire effect
+  maxFire: 8,                              // Maximum fire size
 
-#### Combo Settings
-- `showCombo`: Show combo counter, false = hide (default: true)
-- `comboFontSize`: Combo text size in pixels (default: 240)
-- `comboSave`: Whether sending same emote during decay saves combo (default: true)
+  // Animation settings
+  comboPulseAnimation: true,               // Enable combo pulse animation when incremented
+  fireAnimation: true,                     // Enable fire animation
+  comboDecayAnimation: true,               // Enable combo decay animation (if false, combo immediately goes to 0 when timer expires)
 
-#### Positioning
-- `anchorX`: Horizontal anchor (0 = left, 1 = center, 2 = right) (default: 0)
-- `anchorY`: Vertical anchor (0 = bottom, 1 = center, 2 = top) (default: 0)
-
-#### Fire Effect Settings
-- `fireShow`: Enable fire effect (default: true)
-- `fireComboCount`: Combo threshold to show fire effect (default: 5)
-- `fireEmoji`: Emoji to show as fire effect (default: '🔥')
-- `maxFire`: Maximum fire size (default: 8)
-
-#### Animation Settings
-- `comboPulseAnimation`: Enable combo pulse animation when incremented (default: true)
-- `fireAnimation`: Enable fire animation (default: true)
-- `comboDecayAnimation`: Enable combo decay animation, if false combo immediately goes to 0 when timer expires (default: true)
-
-#### Debug Settings
-- `debug`: Enable debug logging (default: false)
-- `debugurl`: Enable debug URL - automatically populate all parameters in URL (default: false)
-
-
-## Local Config Example
-
-To use a different channel with custom settings:
-```
-index.html?nickname=hellcake47&comboFontSize=300&fireComboCount=3&debug=true
+  // Debug settings
+  debug: false,                            // Enable debug logging
+  debugurl: false                          // Enable debug URL - automatically populate all parameters in URL
+};
 ```
 
-When `debugurl=true`, the URL will automatically be updated to include all configuration parameters.
+## URL Parameters
+
+You can override configuration values using URL parameters. For example:
+`index.html?nickname=hellcake47&fadeTimeout=10000&showCombo=false`
+
+## Supported Emote Platforms
+
+- **Twitch** emotes
+- **7TV** emotes
+- **BTTV** emotes
+- **FFZ** emotes
+## Known Issues
+
+- Animated emotes may show only first frame if not properly cached (fixed with cache busting)
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the terms specified in the LICENSE file.

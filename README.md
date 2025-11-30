@@ -1,52 +1,79 @@
 # LastEmote
 
-A 7TV emote tracker with combo counter for Twitch streams. Displays 7TV emotes from chat with combo tracking functionality.
+A Twitch overlay that displays the last 7TV emote used in chat with combo counter and visual effects.
 
 ## Features
 
-- Real-time 7TV emote display from Twitch chat
-- Combo counter for repeated emotes
-- Customizable positioning and styling
-- Automatic fade after inactivity
-- Supports both global and channel-specific 7TV emotes
+- **7TV Emote Tracking**: Automatically detects and displays 7TV emotes from Twitch chat
+- **Combo Counter**: Shows consecutive use count of the same emote
+- **Visual Effects**: Includes fire effects when combo reaches a threshold
+- **Customizable Configuration**: Supports various appearance and behavior settings
+- **Debug Mode**: Optional logging for troubleshooting
+- **Local Config via URL**: All parameters can be overridden through URL parameters
 
 ## Installation
 
-### Automatic Installation
-
 1. Clone or download this repository
-2. Copy the `src/` folder contents to your desired location
-3. Configure `config.js` with your settings
-
-## Setup in OBS Studio
-
-1. Open OBS Studio
-2. Go to Sources > Add > Browser
-3. Select `index.html`
-4. Set width/height (recommended: resolution of your stream `[1920x1080 maybe]`)
-5. Check "Shutdown source when not visible" and "Refresh browser when scene becomes active"
+2. Open `index.html` in your browser or OBS browser sourse
 
 ## Configuration
 
-Edit `config.js` to customize:
+### Config File
 
-- `nickname`: Your Twitch channel name
-- `showCombo`: Enable/disable combo counter
-- `comboFontSize`: Size of combo text (in pixels)
-- `fadeTimeout`: Time before emote fades (in ms, 0 = never fade)
-- `minComboToShow`: Minimum combo count to show (W.I.P)
-- `anchorX`: Horizontal position (0 = left, 1 = center, 2 = right)
-- `anchorY`: Vertical position (0 = bottom, 1 = center, 2 = top)
-- `borderRadius`: Corner radius for emotes
-- `fontFamily`/`fontColor`: Combo text styling
+Default configuration is stored in `config.js`. All parameters include comments explaining their function.
 
-## Usage
+### URL Parameters
 
-Once installed and added to OBS, LastEmote will:
-- Connect to your Twitch channel's chat
-- Display 7TV emotes as they appear in chat
-- Track and display combo counts for repeated emotes
-- Automatically fade emotes after the timeout period
+All configuration parameters can be overridden using URL parameters. For example:
+```
+index.html?nickname=hellcake47&fadeTimeout=10000&showCombo=false
+```
+
+### Configuration Parameters
+
+#### General Settings
+- `nickname`: Twitch channel name to monitor (default: 'ikuza47')
+- `fadeTimeout`: Time (ms) before emote fades, 0 = never fade (default: 5000)
+
+#### Appearance Settings
+- `borderRadius`: Image corner radius in pixels (default: 12)
+- `fontFamily`: Font family for combo text (default: 'Inter, sans-serif')
+- `fontColor`: Combo text color (default: '#ffffffff')
+
+#### Combo Settings
+- `showCombo`: Show combo counter, false = hide (default: true)
+- `comboFontSize`: Combo text size in pixels (default: 240)
+- `comboSave`: Whether sending same emote during decay saves combo (default: true)
+
+#### Positioning
+- `anchorX`: Horizontal anchor (0 = left, 1 = center, 2 = right) (default: 0)
+- `anchorY`: Vertical anchor (0 = bottom, 1 = center, 2 = top) (default: 0)
+
+#### Fire Effect Settings
+- `fireShow`: Enable fire effect (default: true)
+- `fireComboCount`: Combo threshold to show fire effect (default: 5)
+- `fireEmoji`: Emoji to show as fire effect (default: '🔥')
+- `maxFire`: Maximum fire size (default: 8)
+
+#### Animation Settings
+- `comboPulseAnimation`: Enable combo pulse animation when incremented (default: true)
+- `fireAnimation`: Enable fire animation (default: true)
+- `comboDecayAnimation`: Enable combo decay animation, if false combo immediately goes to 0 when timer expires (default: true)
+
+#### Debug Settings
+- `debug`: Enable debug logging (default: false)
+- `debugurl`: Enable debug URL - automatically populate all parameters in URL (default: false)
+
+
+## Local Config Example
+
+To use a different channel with custom settings:
+```
+index.html?nickname=hellcake47&comboFontSize=300&fireComboCount=3&debug=true
+```
+
+When `debugurl=true`, the URL will automatically be updated to include all configuration parameters.
 
 ## License
-[LICENSE](LICENSE)
+
+This project is licensed under the MIT License - see the LICENSE file for details.
